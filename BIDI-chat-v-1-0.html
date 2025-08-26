@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat — resilient</title>
+  <style>
+    :root{
+      --bg:#0b1220; --fg:#e5e7eb; --muted:#a3adc2; --panel:#0f172a; --border:#1f2937;
+      --accent:#60a5fa; --bi:#9fc041; --di:#6ec3ff; --bubble-di:#0c2238; --bubble-bi:#132412;
+      --shadow: 0 10px 32px rgba(0,0,0,.35); --radius:18px; --chat-text-size: 1.25rem;
+    }
+    [data-theme="dark"]{ --bg:#0b1220; --fg:#e5e7eb; --muted:#a3adc2; --panel:#0f172a; --border:#1f2937; --accent:#60a5fa; --bi:#a4df53; --di:#7cc7ff; --bubble-di:#0c2238; --bubble-bi:#132412; }
+    [data-theme="light"]{ --bg:#f7fafc; --fg:#0b1020; --muted:#4a5568; --panel:#ffffff; --border:#e2e8f0; --accent:#2563eb; --bi:#356a1a; --di:#0b5aa6; --bubble-di:#e6f0ff; --bubble-bi:#e9f7e4; --shadow: 0 8px 24px rgba(0,0,0,.08); }
+    [data-theme="sky"]{ --bg:#071825; --fg:#e7f5ff; --muted:#a8c5dd; --panel:#0c2438; --border:#15344a; --accent:#7dd3fc; --bi:#9ae6b4; --di:#93c5fd; --bubble-di:#0f3050; --bubble-bi:#0d3a2b; }
+    [data-theme="stars"]{ --bg:#0b032d; --fg:#e9e7ff; --muted:#b7b3d9; --panel:#120748; --border:#2a1a6b; --accent:#f0abfc; --bi:#a3e635; --di:#22d3ee; --bubble-di:#1a0b5a; --bubble-bi:#1a3a0b; }
+    [data-theme="sun"]{ --bg:#fffaf0; --fg:#2d1600; --muted:#7b4a2a; --panel:#ffffff; --border:#f4e1c7; --accent:#f59e0b; --bi:#0f5132; --di:#1d4ed8; --bubble-di:#fff1d6; --bubble-bi:#f1ffea; --shadow: 0 8px 24px rgba(115,69,0,.10); }
+    [data-theme="rainy"]{ --bg:#0f1720; --fg:#e6edf3; --muted:#9bb2c7; --panel:#111c26; --border:#233446; --accent:#38bdf8; --bi:#8bd17c; --di:#80c7ff; --bubble-di:#11283a; --bubble-bi:#123028; }
+
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--fg)}
+    header{position:sticky;top:0;z-index:10;background:color-mix(in oklab, var(--bg) 86%, transparent);border-bottom:1px solid var(--border);backdrop-filter:blur(6px) saturate(140%)}
+    .wrap{max-width:980px;margin:0 auto;padding:14px 18px}
+    .toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .left,.right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    input[type=text], textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--panel);color:var(--fg);outline:none;box-shadow:var(--shadow)}
+    textarea{height:110px;resize:vertical;font-size:var(--chat-text-size)}
+    button, select{padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--panel);color:var(--fg);cursor:pointer;box-shadow:var(--shadow)}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:.92rem;cursor:pointer}
+    .card{border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
+    .chat{border:1px dashed var(--border);background:transparent;border-radius:var(--radius);padding:4px 0;max-height:60vh;overflow:auto}
+    .bubble{max-width:78%;margin:10px 14px;padding:14px 16px;border-radius:16px;border:1px solid var(--border);word-wrap:break-word;box-shadow:var(--shadow);font-size:var(--chat-text-size)}
+    .role{font-size:1.05rem;font-weight:800;letter-spacing:.2px;display:inline-flex;gap:8px;margin:8px 14px 2px}
+    .di{color:var(--di)} .bi{color:var(--bi)} .bubble.di{background:var(--bubble-di);margin-right:auto} .bubble.bi{background:var(--bubble-bi);margin-left:auto;white-space:pre-wrap}
+    .muted{color:var(--muted)} .tag{font-size:.85rem;color:#cbd5e1;background:#0f1b2e;border:1px solid #1f2c45;padding:2px 6px;border-radius:999px}
+    details>summary{cursor:pointer;user-select:none;list-style:none}
+    details>summary::marker,details>summary::-webkit-details-marker{display:none}
+    .typing{opacity:.85} .dots::after{content:'…';animation:dots 1.4s infinite steps(4,end);margin-left:2px}
+    @keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}100%{content:''}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="toolbar">
+        <div class="left">
+          <strong>Chat</strong>
+          <div class="pill" id="sidPill" title="Copy ID">Session: <span id="sid"></span></div>
+        </div>
+        <div class="right">
+          <label class="muted" for="themeSelect">Theme</label>
+          <select id="themeSelect">
+            <option value="dark">Dark</option><option value="light">Light</option>
+            <option value="sky">Sky</option><option value="stars">Stars</option>
+            <option value="sun">Sun</option><option value="rainy">Rainy</option>
+          </select>
+          <label class="muted" for="fontSelect">Font size</label>
+          <select id="fontSelect">
+            <option value="15px">tiny (15px)</option>
+            <option value="20px">very small (20px)</option>
+            <option value="25px">small (25px)</option>
+            <option value="30px" selected>normal (30px)</option>
+            <option value="40px">large (40px)</option>
+            <option value="50px">xl (50px)</option>
+          </select>
+          <details class="menu">
+            <summary>⚙️ Settings</summary>
+            <div class="panel" style="position:absolute;right:0;top:calc(100% + 8px);min-width:320px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow)">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <label class="muted">Hosted Chat URL</label>
+                  <input id="chatUrl" type="text" placeholder="https://..." autocomplete="off" />
+                  <div style="display:flex;gap:8px;margin-top:6px;">
+                    <button id="saveUrlBtn">Save URL</button>
+                    <button id="clearUrlBtn">Clear</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="muted">Session ID</label>
+                  <input id="sidInput" type="text" placeholder="Session ID" autocomplete="off" />
+                  <div style="display:flex;gap:8px;margin-top:6px;">
+                    <button id="saveSidBtn">Save ID</button>
+                    <button id="newSidBtn">New ID</button>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                <button id="regen">New session</button>
+                <button id="resetPrefs">Restore defaults</button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" style="margin-top:10px;">
+    <h3 style="margin:6px 6px 8px;">Conversation</h3>
+    <section id="log" class="chat" aria-live="polite"></section>
+
+    <section class="card" style="margin-top:12px;">
+      <div style="display:flex;gap:12px;align-items:flex-end;">
+        <div style="flex:1 1 auto;">
+          <textarea id="msg" placeholder="Type… (Enter to send, Shift+Enter — new line)"></textarea>
+        </div>
+        <div><button id="sendBtn">Send</button></div>
+      </div>
+      <p class="muted" style="margin:.5rem 0 0">/retry — resend last</p>
+    </section>
+  </main>
+
+  <script>
+    function uuidv4(){ if(crypto&&crypto.randomUUID) return crypto.randomUUID(); return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;const v=c==='x'?r:(r&0x3|0x8);return v.toString(16)}) }
+    const qs=new URLSearchParams(location.search); const hash=new URLSearchParams(location.hash?.slice(1));
+    const SID_KEY='diChatSid', URL_KEY='diChatUrl', THEME_KEY='diTheme', FS_KEY='diFontSize';
+    const sidEl=document.getElementById('sid'), sidPill=document.getElementById('sidPill');
+    const sidInput=document.getElementById('sidInput'), saveSidBtn=document.getElementById('saveSidBtn'), newSidBtn=document.getElementById('newSidBtn');
+    const urlInput=document.getElementById('chatUrl'), saveUrlBtn=document.getElementById('saveUrlBtn'), clearUrlBtn=document.getElementById('clearUrlBtn');
+    const themeSelect=document.getElementById('themeSelect'), fontSelect=document.getElementById('fontSelect');
+    const msg=document.getElementById('msg'); const sendBtn=document.getElementById('sendBtn'); const log=document.getElementById('log');
+    const regen=document.getElementById('regen'), resetPrefs=document.getElementById('resetPrefs');
+    let busy=false, ghostEl=null, lastUserText='';
+
+    function getSessionId(){return localStorage.getItem(SID_KEY)}
+    function setSessionId(id){ if(!id) return; localStorage.setItem(SID_KEY,id); sidEl.textContent=id; const h=new URLSearchParams(location.hash?.slice(1)); h.set('sid',id); location.hash='#'+h.toString() }
+    function ensureSessionId(){ const fromUrl=qs.get('sid')||hash.get('sid'); if(fromUrl){setSessionId(fromUrl); return fromUrl} let id=getSessionId(); if(!id){ id=uuidv4(); setSessionId(id) } return id }
+    function getChatUrl(){ return localStorage.getItem(URL_KEY)||'' }
+    function setChatUrl(u){ if(u===undefined) return; localStorage.setItem(URL_KEY,u||''); urlInput.value=u||''; const h=new URLSearchParams(location.hash?.slice(1)); h.set('url',u||''); location.hash='#'+h.toString() }
+    function setTheme(theme){ document.documentElement.setAttribute('data-theme',theme); localStorage.setItem(THEME_KEY,theme); themeSelect.value=theme; }
+    function setFontSize(px){ document.documentElement.style.setProperty('--chat-text-size', px); localStorage.setItem(FS_KEY,px); fontSelect.value=px; }
+    (function init(){ const theme = qs.get('theme')||hash.get('theme')||localStorage.getItem(THEME_KEY)||'dark';
+      const fs = qs.get('fs')||hash.get('fs')||localStorage.getItem(FS_KEY)||'30px'; setTheme(theme); setFontSize(fs);
+      setChatUrl(qs.get('url')||hash.get('url')||getChatUrl()); ensureSessionId(); })();
+
+    function showRole(r){ return r==='Digital Intelligence'||r==='DI'?'Digital Intelligence':(r==='BI'?'Biological Intelligence':r) }
+    function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+    function renderMarkdown(md){ md=escapeHtml(md);
+      md=md.replace(/```([\s\S]*?)```/g,(m,code)=>'<pre><code>'+code.replace(/\n$/,'')+'</code></pre>');
+      md=md.replace(/`([^`]+)`/g,'<code>$1</code>');
+      md=md.replace(/^\s*###\s+(.*)$/gm,'<h3>$1</h3>');
+      md=md.replace(/^\s*##\s+(.*)$/gm,'<h2>$1</h2>');
+      md=md.replace(/^\s*#\s+(.*)$/gm,'<h1>$1</h1>');
+      md=md.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+      md=md.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+      md=md.replace(/\[([^\]]+)\]\((https?:[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      md=md.split(/\n{2,}/).map(b=>/^\s*<h\d|^\s*<pre/.test(b)?b:'<p>'+b.replace(/\n/g,'<br>')+'</p>').join('\n'); return md;
+    }
+    function makeLine(role,text,{asHtml=false,kind}={}){
+      const out=document.createElement('div');
+      const roleRow=document.createElement('div'); roleRow.className='role '+(role==='Digital Intelligence'?'di':'bi'); roleRow.textContent=showRole(role);
+      if(kind){ const tag=document.createElement('span'); tag.className='tag'; tag.textContent=kind; roleRow.appendChild(tag) }
+      const bubble=document.createElement('div'); bubble.className='bubble '+(role==='Digital Intelligence'?'di':'bi');
+      if(asHtml){ const md=document.createElement('div'); md.className='md'; md.innerHTML=renderMarkdown(text); bubble.appendChild(md) } else { bubble.textContent=text }
+      out.appendChild(roleRow); out.appendChild(bubble); return out;
+    }
+    function logLine(role,text,opts){ const line=makeLine(role,text,opts||{}); log.appendChild(line); log.scrollTop=log.scrollHeight; return line }
+    function setBusy(b){ busy=b; msg.disabled=b; sendBtn.disabled=b; if(b) msg.blur(); }
+    function showTyping(){ removeTyping(); ghostEl=logLine('Digital Intelligence','Digital Intelligence is thinking',{}); ghostEl.querySelector('.bubble').classList.add('typing','dots'); }
+    function removeTyping(){ if(ghostEl&&ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl); ghostEl=null; }
+
+    function appendFromPayload(payload){
+      if(payload==null) return;
+      if(typeof payload==='string'){
+        const t=payload.trim();
+        if(t.includes('\n{') && !t.trim().startsWith('[')){
+          t.split(/\n+/).forEach(part=>{ const p=part.trim(); if(!p) return; try{ appendFromPayload(JSON.parse(p)) }catch{ appendFromPayload(p) } });
+          return;
+        }
+        if(t.startsWith('{')||t.startsWith('[')){ try{ return appendFromPayload(JSON.parse(t)) }catch{} }
+        return logLine('Digital Intelligence', t, { asHtml:true });
+      }
+      if(Array.isArray(payload)){ payload.forEach(item=>appendFromPayload(item)); return; }
+      if(payload && typeof payload==='object'){
+        if(payload.output === ""){
+          const line = logLine('Digital Intelligence', '∅ The model returned an empty response. Try **/retry**.', { asHtml:true, kind:'empty' });
+          return;
+        }
+        if(typeof payload.output==='string' && payload.output.trim()) return appendFromPayload(payload.output);
+        if(Array.isArray(payload.outputs) && payload.outputs.length){ payload.outputs.forEach(x=>appendFromPayload(x)); return; }
+        if(Array.isArray(payload.messages) && payload.messages.length){ payload.messages.forEach(x=>appendFromPayload(x)); return; }
+        if(Array.isArray(payload.segments) && payload.segments.length){ payload.segments.forEach(x=>appendFromPayload(x)); return; }
+        if(payload.type==='text' && typeof payload.text==='string'){ return appendFromPayload(payload.text); }
+        if(typeof payload.answer==='string') return appendFromPayload(payload.answer);
+        if(typeof payload.message==='string') return appendFromPayload(payload.message);
+        if(payload.data) return appendFromPayload(payload.data);
+        if(payload.functionCall){
+          const {name,args} = payload.functionCall;
+          const md = `**Tool call:** \`${name||'?'}\`\n\n\`\`\`json\n${JSON.stringify(args||{},null,2)}\n\`\`\``;
+          logLine('Digital Intelligence', md, { asHtml:true, kind:'tool call' });
+          return;
+        }
+        if(payload.toolResult || payload.error){
+          const body = payload.toolResult || ('Error: '+payload.error);
+          const md = `**Tool result:**\n\n\`\`\`json\n${typeof body==='string'?body:JSON.stringify(body,null,2)}\n\`\`\``;
+          logLine('Digital Intelligence', md, { asHtml:true, kind:'tool result' });
+          return;
+        }
+        logLine('Digital Intelligence', '```json\n'+JSON.stringify(payload,null,2)+'\n```', { asHtml:true, kind:'raw' });
+        return;
+      }
+      logLine('Digital Intelligence', String(payload??''), { asHtml:true });
+    }
+
+    async function tryStream(res){
+      const ct=(res.headers.get('content-type')||'').toLowerCase();
+      if(!res.body) return false;
+      const isSSE = ct.includes('text/event-stream');
+      const isND = ct.includes('application/x-ndjson') || ct.includes('ndjson');
+      if(!(isSSE||isND)) return false;
+      const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf='';
+      while(true){ const {value, done} = await reader.read(); if(done) break;
+        buf += decoder.decode(value,{stream:true});
+        if(isSSE){ const chunks = buf.split('\n\n'); buf = chunks.pop();
+          for(const chunk of chunks){ const lines = chunk.split('\n').map(l=>l.trim()).filter(Boolean);
+            for(const line of lines){ if(line.startsWith('data:')){ const data=line.slice(5).trim(); if(data==='[DONE]') continue;
+              try{ appendFromPayload(JSON.parse(data)) }catch{ appendFromPayload(data) } } } } }
+        else { const lines = buf.split('\n'); buf = lines.pop();
+          for(const ln of lines){ const t=ln.trim(); if(!t) continue; try{ appendFromPayload(JSON.parse(t)) }catch{ appendFromPayload(t) } } }
+      }
+      const tail = buf.trim(); if(tail){ try{ appendFromPayload(JSON.parse(tail)) }catch{ appendFromPayload(tail) } }
+      return true;
+    }
+
+    saveUrlBtn.addEventListener('click',()=>{ localStorage.setItem('diChatUrl', urlInput.value.trim()); });
+    clearUrlBtn.addEventListener('click',()=>{ localStorage.setItem('diChatUrl',''); urlInput.value=''; });
+    urlInput.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); saveUrlBtn.click(); e.target.blur(); }});
+
+    saveSidBtn.addEventListener('click',()=>{ const v=sidInput.value.trim(); if(!v) return; setSessionId(v); logLine('Digital Intelligence','Session ID set.'); });
+    sidInput.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); saveSidBtn.click(); e.target.blur(); }});
+    newSidBtn.addEventListener('click',()=>{ sidInput.value=uuidv4(); sidInput.select(); });
+
+    themeSelect.addEventListener('change',()=> document.documentElement.setAttribute('data-theme', themeSelect.value));
+    fontSelect.addEventListener('change',()=> document.documentElement.style.setProperty('--chat-text-size', fontSelect.value));
+    resetPrefs.addEventListener('click',()=>{ document.documentElement.setAttribute('data-theme','dark'); document.documentElement.style.setProperty('--chat-text-size','30px'); });
+
+    sidPill.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(getSessionId()); sidPill.title='Copied!'; setTimeout(()=>sidPill.title='Copy ID',1200) }catch{} });
+    regen.addEventListener('click',()=>{ setSessionId(uuidv4()); logLine('Digital Intelligence','New session — fresh conversation context.'); });
+
+    async function handleSend(text){
+      const url=getChatUrl(); const sid=getSessionId();
+      if(!text.trim()) return;
+      if(text==='/retry'){ if(!lastUserText) return; text=lastUserText; }
+      if(text.startsWith('/sid ')){ setSessionId(text.slice(5).trim()); logLine('Biological Intelligence', text); logLine('Digital Intelligence','Session ID set.'); msg.value=''; return; }
+      if(text==='/newid'){ setSessionId(uuidv4()); logLine('Biological Intelligence', text); logLine('Digital Intelligence','Generated new ID.'); msg.value=''; return; }
+      if(text.startsWith('/url ')){ localStorage.setItem('diChatUrl', text.slice(5).trim()); logLine('Biological Intelligence', text); logLine('Digital Intelligence','Saved Chat URL.'); msg.value=''; return; }
+      if(!url){ logLine('Digital Intelligence','⚠️ Missing URL. Set it in **Settings → Save URL**.',{asHtml:true}); return; }
+
+      lastUserText=text;
+      logLine('Biological Intelligence', text);
+      msg.value=''; setBusy(true); showTyping();
+
+      try{
+        const res=await fetch(url,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({chatInput:text,sessionId:sid}) });
+        const streamed = await tryStream(res);
+        if(streamed){ removeTyping(); return; }
+        const ct=res.headers.get('content-type')||'';
+        const payload = ct.includes('application/json') ? await res.json() : await res.text();
+        removeTyping(); appendFromPayload(payload);
+      }catch(e){
+        removeTyping(); logLine('Digital Intelligence','Error: '+(e.message||String(e)));
+      }finally{ setBusy(false); msg.focus(); }
+    }
+
+    msg.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); if(!busy) handleSend(msg.value); } });
+    sendBtn.addEventListener('click',()=>{ if(!busy) handleSend(msg.value); });
+
+    window._append = appendFromPayload;
+  </script>
+</body>
+</html>
