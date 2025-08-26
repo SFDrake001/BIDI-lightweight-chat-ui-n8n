@@ -7,6 +7,7 @@ It connects a simple chat frontend to the **Google Gemini Chat Model** with memo
 
 [![Latest release](https://img.shields.io/github/v/release/SFDrake001/BIDI-lightweight-chat-ui-n8n)](https://github.com/SFDrake001/BIDI-lightweight-chat-ui-n8n/releases/latest)
 
+
 ---
 
 ## ✨ Features
