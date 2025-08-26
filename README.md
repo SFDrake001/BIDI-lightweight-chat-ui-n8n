@@ -59,4 +59,6 @@ For the full license text, see [LICENSE](./LICENSE).
 
 ## 🙌 Support
 If you find this project useful, consider starring ⭐ the repo or supporting future work:  
-[Buy Me a Coffee](#) ☕
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/andrewdrake)
+
