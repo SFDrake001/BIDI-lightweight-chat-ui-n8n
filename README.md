@@ -65,3 +65,12 @@ If you find this project useful, consider starring ⭐ the repo or supporting fu
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/andrewdrake)
 
+---
+
+## 🤝 Credits
+
+This project was built together with the help of **GPT 5**,   
+who assisted in writing code, documentation, and ideas for improving the UI.  
+
+Without this collaboration, it would have been much harder (or even impossible) to create.
+
