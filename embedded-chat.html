@@ -229,9 +229,9 @@
     sidInput.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); saveSidBtn.click(); e.target.blur(); }});
     newSidBtn.addEventListener('click',()=>{ sidInput.value=uuidv4(); sidInput.select(); });
 
-    themeSelect.addEventListener('change',()=> document.documentElement.setAttribute('data-theme', themeSelect.value));
-    fontSelect.addEventListener('change',()=> document.documentElement.style.setProperty('--chat-text-size', fontSelect.value));
-    resetPrefs.addEventListener('click',()=>{ document.documentElement.setAttribute('data-theme','dark'); document.documentElement.style.setProperty('--chat-text-size','30px'); });
+    themeSelect.addEventListener('change',()=> setTheme(themeSelect.value));
+    fontSelect.addEventListener('change',()=> setFontSize(fontSelect.value));
+    resetPrefs.addEventListener('click',()=>{ setTheme('dark'); setFontSize('30px'); });
 
     sidPill.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(getSessionId()); sidPill.title='Copied!'; setTimeout(()=>sidPill.title='Copy ID',1200) }catch{} });
     regen.addEventListener('click',()=>{ setSessionId(uuidv4()); logLine('Digital Intelligence','New session — fresh conversation context.'); });
