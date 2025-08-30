@@ -24,6 +24,7 @@
     .left,.right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     input[type=text], textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--panel);color:var(--fg);outline:none;box-shadow:var(--shadow)}
     textarea{height:110px;resize:vertical;font-size:var(--chat-text-size)}
+    .msg-label{display:block;margin:0 0 6px 2px}
     button, select{padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--panel);color:var(--fg);cursor:pointer;box-shadow:var(--shadow)}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:.92rem;cursor:pointer}
     .card{border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
@@ -101,6 +102,7 @@
     <section class="card" style="margin-top:12px;">
       <div style="display:flex;gap:12px;align-items:flex-end;">
         <div style="flex:1 1 auto;">
+          <label for="msg" class="muted msg-label">Wiadomość</label>
           <textarea id="msg" placeholder="Type… (Enter to send, Shift+Enter — new line)"></textarea>
         </div>
         <div><button id="sendBtn">Send</button></div>
